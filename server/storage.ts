@@ -69,6 +69,11 @@ export class MemStorage implements IStorage {
         })
         .slice(0, 5);
 
+      // If city filter is applied and no accounts match, skip this trend
+      if (filters?.cities && filters.cities.length > 0 && topAccounts.length === 0) {
+        continue;
+      }
+
       const totalEngagement = trend.retweets + trend.likes + trend.comments;
 
       const cityDistribution: Record<string, number> = {};
