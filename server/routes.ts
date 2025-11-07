@@ -66,6 +66,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // GET /api/trends/:id/history - Get historical snapshots for a trend
+  app.get("/api/trends/:id/history", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const hours = req.query.hours ? parseInt(req.query.hours as string) : 24;
+      
+      // Validate hours parameter (1-720 hours = 1 hour to 30 days)
+      if (isNaN(hours) || hours < 1 || hours > 720) {
+        return res.status(400).json({ 
+          error: "Invalid hours parameter. Must be between 1 and 720." 
+        });
+      }
+      
+      const snapshots = await storage.getSnapshotsByTrend(id, hours);
+      res.json(snapshots);
+    } catch (error) {
+      console.error("Error fetching trend history:", error);
+      res.status(500).json({ error: "Failed to fetch trend history" });
+    }
+  });
+
   const httpServer = createServer(app);
 
   // WebSocket server for real-time updates

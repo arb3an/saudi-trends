@@ -12,22 +12,31 @@ Track and analyze Saudi Arabian social media trends in real-time with:
 - Admin filters for cities, bot detection, and time range
 
 ## Current State
-**Phase 1 Complete**: Schema definition and all frontend components built
-- ✅ Data models and TypeScript interfaces defined
-- ✅ Saudi-themed design system with Arabic RTL support
-- ✅ All React components implemented (Dashboard, Filters, Trends, Map, etc.)
-- ⏳ Backend implementation in progress
-- ⏳ WebSocket integration pending
+**Phase 2 Complete**: Full-stack application with PostgreSQL persistence
+- ✅ PostgreSQL database with Drizzle ORM for persistent storage
+- ✅ Historical snapshots table with automatic capture every 5 minutes
+- ✅ Scheduled jobs for data updates, snapshots, and cleanup (30-day retention)
+- ✅ WebSocket real-time updates working with database-backed data
+- ✅ All API endpoints functional with live data
+- ✅ City filtering logic implemented (only shows trends with matching accounts)
+- ⏳ Twitter/X API integration pending (requires API credentials)
 
 ## Recent Changes (November 7, 2025)
-- Created comprehensive data schemas for trends, accounts, posts, and filters
-- Set up Arabic-first UI with IBM Plex Sans Arabic font
-- Implemented Saudi-themed green color palette
-- Built complete dashboard with RTL support
-- Created filter sidebar with city selection and bot detection
-- Developed trend cards, top accounts, stats overview, and map components
-- Added dark mode support with theme toggle
-- Implemented live status indicator and loading skeletons
+### Database Migration
+- Migrated from in-memory storage to PostgreSQL with Drizzle ORM
+- Added snapshots table for historical trend tracking
+- Implemented automatic database seeding on startup (12 trends, 83 accounts)
+- Created DbStorage class with full CRUD operations
+
+### Scheduled Jobs
+- Trend updates broadcast via WebSocket every 60 seconds
+- Snapshot capture every 5 minutes for time-series analytics
+- Automatic cleanup of snapshots older than 30 days
+
+### API Enhancements
+- Added `/api/trends/:id/history` endpoint for historical data
+- Fixed city filtering to prevent empty trend cards
+- Optimized query structure with array-based query keys for cache invalidation
 
 ## Project Architecture
 
@@ -80,10 +89,13 @@ shared/
 9. ✅ Loading skeletons and error states
 10. ✅ Arabic RTL support throughout
 
-### API Endpoints (To Be Implemented)
-- `GET /api/trends` - Fetch trending topics with filters
-- `GET /api/accounts/top` - Fetch top participating accounts
-- `WebSocket /ws` - Real-time updates
+### API Endpoints
+- `GET /api/trends` - Fetch trending topics with filters (cities, excludeBots, timeRange, minEngagement)
+- `GET /api/trends/:id` - Get single trend by ID
+- `GET /api/trends/:id/history` - Get historical snapshots (query param: hours)
+- `GET /api/accounts/top` - Fetch top 20 participating accounts by followers
+- `GET /api/accounts` - Get accounts by trend (query param: trendId)
+- `WebSocket /ws` - Real-time updates every 60 seconds
 
 ### WebSocket Messages
 - `trends_update`: Broadcast updated trends data

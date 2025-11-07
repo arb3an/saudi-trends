@@ -143,6 +143,11 @@ export async function seedDatabase() {
     console.log(
       `✅ Seeded ${createdTrends.length} trends and ${totalAccounts} accounts`
     );
+
+    // Capture initial snapshot for historical tracking
+    const { storage } = await import("./db-storage");
+    await storage.captureSnapshots();
+    console.log("📸 Captured initial snapshot");
   } catch (error) {
     console.error("Error seeding database:", error);
     throw error;
