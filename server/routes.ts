@@ -1,15 +1,132 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
+import { filterSchema, type WSMessage } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // put application routes here
-  // prefix all routes with /api
+  // GET /api/trends - Get all trends with filters
+  app.get("/api/trends", async (req, res) => {
+    try {
+      const filters = filterSchema.parse({
+        cities: req.query.cities
+          ? Array.isArray(req.query.cities)
+            ? req.query.cities
+            : [req.query.cities]
+          : [],
+        excludeBots: req.query.excludeBots === "true",
+        timeRange: req.query.timeRange || "24h",
+        minEngagement: req.query.minEngagement
+          ? parseInt(req.query.minEngagement as string)
+          : 0,
+      });
 
-  // use storage to perform CRUD operations on the storage interface
-  // e.g. storage.insertUser(user) or storage.getUserByUsername(username)
+      const trends = await storage.getTrends(filters);
+      res.json(trends);
+    } catch (error) {
+      console.error("Error fetching trends:", error);
+      res.status(500).json({ error: "Failed to fetch trends" });
+    }
+  });
+
+  // GET /api/trends/:id - Get single trend
+  app.get("/api/trends/:id", async (req, res) => {
+    try {
+      const trend = await storage.getTrendById(req.params.id);
+      if (!trend) {
+        return res.status(404).json({ error: "Trend not found" });
+      }
+      res.json(trend);
+    } catch (error) {
+      console.error("Error fetching trend:", error);
+      res.status(500).json({ error: "Failed to fetch trend" });
+    }
+  });
+
+  // GET /api/accounts/top - Get top accounts
+  app.get("/api/accounts/top", async (_req, res) => {
+    try {
+      const accounts = await storage.getTopAccounts(20);
+      res.json(accounts);
+    } catch (error) {
+      console.error("Error fetching top accounts:", error);
+      res.status(500).json({ error: "Failed to fetch accounts" });
+    }
+  });
+
+  // GET /api/accounts - Get accounts by trend
+  app.get("/api/accounts", async (req, res) => {
+    try {
+      const trendId = req.query.trendId as string | undefined;
+      const accounts = await storage.getAccounts(trendId);
+      res.json(accounts);
+    } catch (error) {
+      console.error("Error fetching accounts:", error);
+      res.status(500).json({ error: "Failed to fetch accounts" });
+    }
+  });
 
   const httpServer = createServer(app);
+
+  // WebSocket server for real-time updates
+  const wss = new WebSocketServer({ server: httpServer, path: "/ws" });
+
+  wss.on("connection", (ws: WebSocket) => {
+    console.log("✅ WebSocket client connected");
+
+    // Send initial connection message
+    const connectedMessage: WSMessage = {
+      type: "connected",
+      data: {
+        message: "Connected to Saudi Trends Analyzer",
+      },
+    };
+    ws.send(JSON.stringify(connectedMessage));
+
+    // Send initial trends data
+    storage.getTrends().then((trends) => {
+      const updateMessage: WSMessage = {
+        type: "trends_update",
+        data: {
+          trends,
+          timestamp: new Date().toISOString(),
+        },
+      };
+      ws.send(JSON.stringify(updateMessage));
+    });
+
+    ws.on("close", () => {
+      console.log("❌ WebSocket client disconnected");
+    });
+
+    ws.on("error", (error) => {
+      console.error("WebSocket error:", error);
+    });
+  });
+
+  // Broadcast updates to all connected clients every 60 seconds
+  setInterval(async () => {
+    // Update trends with random changes to simulate real-time data
+    storage.updateTrendsRandomly();
+
+    const trends = await storage.getTrends();
+    
+    const updateMessage: WSMessage = {
+      type: "trends_update",
+      data: {
+        trends,
+        timestamp: new Date().toISOString(),
+      },
+    };
+
+    wss.clients.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(JSON.stringify(updateMessage));
+      }
+    });
+
+    console.log(`📡 Broadcasted update to ${wss.clients.size} clients`);
+  }, 60000); // Every 60 seconds
 
   return httpServer;
 }

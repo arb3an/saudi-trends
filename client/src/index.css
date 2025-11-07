@@ -32,15 +32,15 @@
 
   --sidebar-border: 210 4% 86%;
 
-  --sidebar-primary: 156 68% 28%;
+  --sidebar-primary: 152 65% 32%;
 
-  --sidebar-primary-foreground: 156 20% 96%;
+  --sidebar-primary-foreground: 152 20% 96%;
 
-  --sidebar-accent: 156 12% 88%;
+  --sidebar-accent: 152 12% 88%;
 
-  --sidebar-accent-foreground: 156 40% 20%;
+  --sidebar-accent-foreground: 152 40% 20%;
 
-  --sidebar-ring: 156 68% 28%;
+  --sidebar-ring: 152 65% 32%;
 
   --popover: 0 0% 92%;
 
@@ -48,9 +48,9 @@
 
   --popover-border: 210 4% 84%;
 
-  --primary: 156 68% 28%;
+  --primary: 152 65% 32%;
 
-  --primary-foreground: 156 20% 96%;
+  --primary-foreground: 152 20% 96%;
 
   --secondary: 210 6% 86%;
 
@@ -60,9 +60,9 @@
 
   --muted-foreground: 210 6% 35%;
 
-  --accent: 156 12% 88%;
+  --accent: 152 12% 88%;
 
-  --accent-foreground: 156 40% 20%;
+  --accent-foreground: 152 40% 20%;
 
   --destructive: 0 72% 32%;
 
@@ -70,11 +70,11 @@
 
   --input: 210 8% 72%;
   --ring: 156 68% 28%;
-  --chart-1: 156 68% 28%;
-  --chart-2: 195 72% 32%;
-  --chart-3: 42 88% 42%;
-  --chart-4: 280 68% 48%;
-  --chart-5: 24 82% 52%;
+  --chart-1: 152 65% 32%;
+  --chart-2: 195 72% 42%;
+  --chart-3: 42 88% 52%;
+  --chart-4: 280 68% 58%;
+  --chart-5: 24 82% 62%;
 
   --font-sans: 'IBM Plex Sans Arabic', 'Inter', system-ui, sans-serif;
   --font-serif: Georgia, serif;
@@ -150,15 +150,15 @@
 
   --sidebar-border: 210 4% 16%;
 
-  --sidebar-primary: 156 68% 28%;
+  --sidebar-primary: 152 65% 32%;
 
-  --sidebar-primary-foreground: 156 20% 96%;
+  --sidebar-primary-foreground: 152 20% 96%;
 
-  --sidebar-accent: 156 18% 16%;
+  --sidebar-accent: 152 18% 16%;
 
-  --sidebar-accent-foreground: 156 30% 88%;
+  --sidebar-accent-foreground: 152 30% 88%;
 
-  --sidebar-ring: 156 68% 28%;
+  --sidebar-ring: 152 65% 32%;
 
   --popover: 210 4% 14%;
 
@@ -166,9 +166,9 @@
 
   --popover-border: 210 4% 18%;
 
-  --primary: 156 68% 28%;
+  --primary: 152 65% 32%;
 
-  --primary-foreground: 156 20% 96%;
+  --primary-foreground: 152 20% 96%;
 
   --secondary: 210 6% 18%;
 
@@ -178,9 +178,9 @@
 
   --muted-foreground: 210 4% 68%;
 
-  --accent: 156 18% 16%;
+  --accent: 152 18% 16%;
 
-  --accent-foreground: 156 30% 88%;
+  --accent-foreground: 152 30% 88%;
 
   --destructive: 0 72% 32%;
 
@@ -188,7 +188,7 @@
 
   --input: 210 8% 32%;
   --ring: 156 68% 28%;
-  --chart-1: 156 68% 48%;
+  --chart-1: 152 65% 48%;
   --chart-2: 195 72% 58%;
   --chart-3: 42 88% 62%;
   --chart-4: 280 68% 68%;
@@ -234,6 +234,23 @@
   body {
     @apply font-sans antialiased bg-background text-foreground;
   }
+
+  [dir="rtl"] .flip-rtl {
+    transform: scaleX(-1);
+  }
+}
+
+@keyframes pulse-subtle {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+.animate-pulse-subtle {
+  animation: pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
 /**
