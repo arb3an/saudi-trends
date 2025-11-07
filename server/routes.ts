@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
-import { storage } from "./storage";
+import { storage } from "./db-storage";
 import { filterSchema, type WSMessage } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -107,7 +107,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Broadcast updates to all connected clients every 60 seconds
   setInterval(async () => {
     // Update trends with random changes to simulate real-time data
-    storage.updateTrendsRandomly();
+    await storage.updateTrendsRandomly();
 
     const trends = await storage.getTrends();
     
@@ -127,6 +127,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     console.log(`📡 Broadcasted update to ${wss.clients.size} clients`);
   }, 60000); // Every 60 seconds
+
+  // Capture historical snapshots every 5 minutes
+  setInterval(async () => {
+    try {
+      await storage.captureSnapshots();
+      console.log("📸 Captured historical snapshot");
+    } catch (error) {
+      console.error("Error capturing snapshot:", error);
+    }
+  }, 5 * 60 * 1000); // Every 5 minutes
+
+  // Cleanup old snapshots daily (keep last 30 days)
+  setInterval(async () => {
+    try {
+      await storage.cleanupOldSnapshots();
+      console.log("🧹 Cleaned up old snapshots");
+    } catch (error) {
+      console.error("Error cleaning up snapshots:", error);
+    }
+  }, 24 * 60 * 60 * 1000); // Every 24 hours
 
   return httpServer;
 }

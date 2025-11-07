@@ -7,9 +7,21 @@ import {
   type InsertPost,
   type Filters,
   type TrendWithAccounts,
+  type InsertSnapshot,
+  trends,
+  accounts,
+  posts,
+  snapshots,
   saudiCities,
 } from "@shared/schema";
 import { randomUUID } from "crypto";
+import { neon } from "@neondatabase/serverless";
+import { drizzle } from "drizzle-orm/neon-http";
+import { eq, desc, sql, and, inArray } from "drizzle-orm";
+
+const databaseUrl = process.env.DATABASE_URL!;
+const connection = neon(databaseUrl);
+export const db = drizzle(connection);
 
 export interface IStorage {
   // Trends

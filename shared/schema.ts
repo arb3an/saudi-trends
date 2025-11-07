@@ -64,6 +64,27 @@ export const insertPostSchema = createInsertSchema(posts).omit({
 export type InsertPost = z.infer<typeof insertPostSchema>;
 export type Post = typeof posts.$inferSelect;
 
+// Historical Snapshots Schema (for trend analytics over time)
+export const snapshots = pgTable("snapshots", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  trendId: varchar("trend_id").references(() => trends.id).notNull(),
+  hashtag: text("hashtag").notNull(),
+  rank: integer("rank").notNull(),
+  tweetCount: integer("tweet_count").notNull(),
+  retweets: integer("retweets").notNull(),
+  likes: integer("likes").notNull(),
+  comments: integer("comments").notNull(),
+  capturedAt: timestamp("captured_at").notNull().defaultNow(),
+});
+
+export const insertSnapshotSchema = createInsertSchema(snapshots).omit({
+  id: true,
+  capturedAt: true,
+});
+
+export type InsertSnapshot = z.infer<typeof insertSnapshotSchema>;
+export type Snapshot = typeof snapshots.$inferSelect;
+
 // Saudi Cities Data (for filters and map)
 export const saudiCities = [
   { name: "الرياض", nameEn: "Riyadh", lat: 24.7136, lng: 46.6753, region: "central" },
