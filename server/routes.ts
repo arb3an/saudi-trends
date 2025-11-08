@@ -5,6 +5,7 @@ import { storage } from "./db-storage";
 import { filterSchema, type WSMessage } from "@shared/schema";
 import { trendsToCSV, accountsToCSV, generateExportFilename } from "./export-utils";
 import { twitterService } from "./twitter-service";
+import { generateSimulatedAccounts } from "./account-generator";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // GET /api/trends - Get all trends with filters
@@ -202,16 +203,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       for (const trend of newTrends) {
         const createdTrend = await storage.createTrend(trend);
-        
-        // Fetch accounts for this trend (reduced to 5 to save costs)
-        const accounts = await twitterService.fetchTrendAccounts(trend.hashtag, 5);
-        for (const account of accounts) {
-          // Fix: Use the actual trend ID from database, not the hashtag
-          await storage.createAccount({
-            ...account,
-            trendId: createdTrend.id
-          });
-        }
+        // Generate 5 simulated accounts for this trend
+        await generateSimulatedAccounts(createdTrend.id, trend.hashtag, 5);
       }
 
       console.log(`✅ Synced ${newTrends.length} trends from Apify`);
@@ -279,15 +272,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           await storage.clearAllData();
           for (const trend of newTrends.slice(0, 20)) {
             const createdTrend = await storage.createTrend(trend);
-            
-            // Fetch 3 accounts per trend to minimize costs during auto-updates
-            const accounts = await twitterService.fetchTrendAccounts(trend.hashtag, 3);
-            for (const account of accounts) {
-              await storage.createAccount({
-                ...account,
-                trendId: createdTrend.id
-              });
-            }
+            // Generate 3 simulated accounts per trend to minimize processing time
+            await generateSimulatedAccounts(createdTrend.id, trend.hashtag, 3);
           }
         } else {
           // Fallback to simulated updates if API returns nothing

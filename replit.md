@@ -27,12 +27,14 @@ Track and analyze Saudi Arabian social media trends in real-time with:
 ## Recent Changes (November 8, 2025)
 ### Twitter/X API Integration via Apify (Task 7 - Completed)
 - ✅ Integrated Apify Twitter Trends Scraper (cost: ~$0.01 per 1000 results)
-- ✅ Created TwitterService class with fetchTrendingTopics() and fetchTrendAccounts()
+- ✅ Created TwitterService class with fetchTrendingTopics()
 - ✅ Added POST /api/sync/twitter endpoint for manual data synchronization
 - ✅ Auto-fetch real trends every 60 seconds if APIFY_API_TOKEN is set
+- ✅ **Trends: REAL** - Fetched live from Twitter via Apify
+- ✅ **Accounts: SIMULATED** - Using generated test data (Apify account actor unavailable)
 - ✅ Graceful fallback to simulated data when API unavailable
 - ✅ Sentiment analysis and bot detection applied to real Twitter data
-- ✅ Cost optimization: limited to 5 accounts per trend to reduce API costs
+- ⚠️ Account fetching disabled - scrapers/twitter actor not found on Apify
 
 ### Export Functionality (Task 6 - Completed)
 - ✅ Created 4 export endpoints: CSV/JSON for trends and accounts
@@ -79,7 +81,7 @@ Track and analyze Saudi Arabian social media trends in real-time with:
 - **State Management**: TanStack Query (React Query v5)
 - **Routing**: Wouter
 - **Backend**: Express.js + WebSocket (ws)
-- **Storage**: In-memory storage (MemStorage)
+- **Database**: PostgreSQL with Drizzle ORM (DbStorage)
 - **Real-time**: WebSocket for live updates every minute
 
 ### Directory Structure

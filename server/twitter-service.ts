@@ -145,72 +145,10 @@ export class TwitterService {
   }
 
   /**
-   * Fetch accounts participating in a specific trend
+   * Note: Account fetching from Apify is disabled because the required actor
+   * (scrapers/twitter) is not available. Apps use simulated account data instead.
+   * Trends are still fetched in real-time from Apify.
    */
-  async fetchTrendAccounts(hashtag: string, limit: number = 20): Promise<Account[]> {
-    if (!this.client || !this.isEnabled) {
-      console.log('⚠️ Apify service not enabled - skipping account fetch');
-      return [];
-    }
-
-    try {
-      console.log(`🔄 Fetching accounts for hashtag: ${hashtag}...`);
-
-      // Run the Twitter Search Scraper for this hashtag
-      const run = await this.client
-        .actor("scrapers/twitter")
-        .call({
-          searchTerms: [hashtag],
-          maxTweets: limit,
-          includeUserInfo: true,
-        });
-
-      // Fetch results from the dataset
-      const { items } = await this.client
-        .dataset(run.defaultDatasetId)
-        .listItems();
-
-      console.log(`✅ Fetched ${items.length} accounts for ${hashtag}`);
-
-      // Transform to our Account schema
-      const accounts: Account[] = (items as unknown as ApifyAccountItem[]).slice(0, limit).map((item, index) => {
-        const username = item.username || `user_${index}`;
-        const followers = item.followers || Math.floor(Math.random() * 100000);
-        const accountAge = this.calculateAccountAge(item.created_at);
-        const botDetection = detectBot({
-          username,
-          followers,
-          verified: item.verified || false,
-          accountAge,
-        });
-        const botScore = botDetection.score;
-
-        // Assign random Saudi city
-        const cities = Object.keys(SAUDI_WOEIDS);
-        const city = cities[Math.floor(Math.random() * cities.length)];
-
-        return {
-          id: `account-${Date.now()}-${index}`,
-          username,
-          displayName: item.display_name || username,
-          avatar: item.profile_image_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}`,
-          verified: item.verified || false,
-          city,
-          followers,
-          engagementRate: Math.random() * 10,
-          trendId: hashtag,
-          botScore,
-          accountAge,
-          isBot: botScore >= 50,
-        };
-      });
-
-      return accounts;
-    } catch (error) {
-      console.error(`❌ Error fetching accounts for ${hashtag}:`, error);
-      return [];
-    }
-  }
 
   /**
    * Calculate account age in days from created_at timestamp

@@ -282,10 +282,14 @@ export class DbStorage implements IStorage {
 
   // Clear all data (for syncing with fresh data from API)
   async clearAllData(): Promise<void> {
-    await db.delete(snapshots);
-    await db.delete(posts);
-    await db.delete(accounts);
-    await db.delete(trends);
+    // Use transaction to ensure atomicity and proper ordering
+    await db.transaction(async (tx) => {
+      // Delete in reverse foreign key order: children first, then parents
+      await tx.delete(snapshots);  // No foreign keys
+      await tx.delete(posts);      // References accounts & trends
+      await tx.delete(accounts);   // References trends
+      await tx.delete(trends);     // No references (deleted last)
+    });
     console.log("🗑️ Cleared all data from database");
   }
 }
