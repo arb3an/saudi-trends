@@ -25,6 +25,30 @@ Track and analyze Saudi Arabian social media trends in real-time with:
 - ✅ Fallback to simulated data when API unavailable
 
 ## Recent Changes (November 8, 2025)
+
+### Critical Bug Fixes (November 8, 2025 - Session 2)
+**Account Persistence Bug**:
+- ✅ Fixed: Accounts were not persisting to PostgreSQL despite successful creation logs
+- ✅ Root cause: `account-generator.ts` imported MemStorage (in-memory) instead of DbStorage (PostgreSQL)
+- ✅ Solution: Changed import from `./storage` to `./db-storage` in account-generator.ts
+- ✅ Cleanup: Deleted entire MemStorage class, kept only IStorage interface
+- ✅ Verification: 250 accounts now persist correctly across server restarts
+
+**Foreign Key Constraint Violation**:
+- ✅ Fixed: `clearAllData()` caused FK violations when deleting trends before accounts
+- ✅ Root cause: Race condition between manual sync and auto-update jobs
+- ✅ Solution: Wrapped deletion logic in Drizzle transaction with correct order:
+  1. Delete snapshots (no FK dependencies)
+  2. Delete posts (references accounts & trends)
+  3. Delete accounts (references trends)
+  4. Delete trends (deleted last to avoid FK errors)
+- ✅ Verification: Manual sync and auto-update now work without errors
+
+**Documentation Updates**:
+- ✅ Updated replit.md to reflect DbStorage as canonical storage layer
+- ✅ Documented removal of MemStorage to prevent future confusion
+- ✅ All LSP errors resolved (0 diagnostics)
+
 ### Twitter/X API Integration via Apify (Task 7 - Completed)
 - ✅ Integrated Apify Twitter Trends Scraper (cost: ~$0.01 per 1000 results)
 - ✅ Created TwitterService class with fetchTrendingTopics()
