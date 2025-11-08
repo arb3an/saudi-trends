@@ -1,8 +1,24 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { TrendingUp, TrendingDown, Hash, MessageCircle, Heart, Repeat2, ChevronLeft, Smile, Frown, Minus } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  TrendingUp,
+  TrendingDown,
+  Hash,
+  MessageCircle,
+  Heart,
+  Repeat2,
+  ChevronLeft,
+  Smile,
+  Frown,
+  Minus,
+} from "lucide-react";
 import type { Trend } from "@shared/schema";
 
 interface TrendCardProps {
@@ -12,15 +28,26 @@ interface TrendCardProps {
 
 export function TrendCard({ trend, onViewDetails }: TrendCardProps) {
   const isRising = trend.velocity > 0;
-  
+
   return (
-    <Card className="hover-elevate transition-all duration-200" data-testid={`card-trend-${trend.id}`}>
+    <Card
+      className="hover-elevate transition-all duration-200"
+      data-testid={`card-trend-${trend.id}`}
+    >
       <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0 pb-3">
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-2">
             <Badge variant="secondary" className="gap-1.5">
               <Hash className="h-3 w-3" />
-              <span dir="ltr">{trend.hashtag}</span>
+              <a
+                href={`https://twitter.com/hashtag/${encodeURIComponent(trend.hashtag.replace("#", ""))}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-500 hover:underline"
+                dir="ltr"
+              >
+                {trend.hashtag}
+              </a>
             </Badge>
             {isRising ? (
               <TrendingUp className="h-4 w-4 text-primary" />
@@ -46,10 +73,16 @@ export function TrendCard({ trend, onViewDetails }: TrendCardProps) {
           </div>
           {trend.velocity !== 0 && (
             <div className="flex items-center gap-1 mt-1">
-              <span className={`text-xs font-mono ${isRising ? "text-primary" : "text-muted-foreground"}`} dir="ltr">
-                {isRising ? "+" : ""}{trend.velocity.toLocaleString()}
+              <span
+                className={`text-xs font-mono ${isRising ? "text-primary" : "text-muted-foreground"}`}
+                dir="ltr"
+              >
+                {isRising ? "+" : ""}
+                {trend.velocity.toLocaleString()}
               </span>
-              <span className="text-xs text-muted-foreground">في الساعة الأخيرة</span>
+              <span className="text-xs text-muted-foreground">
+                في الساعة الأخيرة
+              </span>
             </div>
           )}
         </div>
@@ -78,7 +111,9 @@ export function TrendCard({ trend, onViewDetails }: TrendCardProps) {
         {/* Sentiment Analysis Indicator */}
         <div className="space-y-2 pt-3 border-t">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-muted-foreground">تحليل المشاعر</span>
+            <span className="text-xs font-medium text-muted-foreground">
+              تحليل المشاعر
+            </span>
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -93,8 +128,11 @@ export function TrendCard({ trend, onViewDetails }: TrendCardProps) {
               </Tooltip>
             </TooltipProvider>
           </div>
-          
-          <div className="h-2 w-full rounded-full overflow-hidden flex" data-testid={`sentiment-bar-${trend.id}`}>
+
+          <div
+            className="h-2 w-full rounded-full overflow-hidden flex"
+            data-testid={`sentiment-bar-${trend.id}`}
+          >
             {trend.sentimentPositive > 0 && (
               <div
                 className="bg-green-500"
@@ -117,7 +155,7 @@ export function TrendCard({ trend, onViewDetails }: TrendCardProps) {
               />
             )}
           </div>
-          
+
           <div className="flex items-center justify-between text-xs text-muted-foreground">
             <div className="flex items-center gap-1">
               <Frown className="h-3 w-3 text-red-500" />
