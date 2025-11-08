@@ -279,6 +279,15 @@ export class DbStorage implements IStorage {
         .where(eq(trends.id, trend.id));
     }
   }
+
+  // Clear all data (for syncing with fresh data from API)
+  async clearAllData(): Promise<void> {
+    await db.delete(snapshots);
+    await db.delete(posts);
+    await db.delete(accounts);
+    await db.delete(trends);
+    console.log("🗑️ Cleared all data from database");
+  }
 }
 
 export const storage = new DbStorage();

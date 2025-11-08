@@ -4,6 +4,7 @@ import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./db-storage";
 import { filterSchema, type WSMessage } from "@shared/schema";
 import { trendsToCSV, accountsToCSV, generateExportFilename } from "./export-utils";
+import { twitterService } from "./twitter-service";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // GET /api/trends - Get all trends with filters
@@ -176,6 +177,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // POST /api/sync/twitter - Manually sync data from Twitter/X via Apify
+  app.post("/api/sync/twitter", async (_req, res) => {
+    try {
+      if (!twitterService.isServiceEnabled()) {
+        return res.status(503).json({
+          error: "Apify service not configured",
+          message: "Please set APIFY_API_TOKEN environment variable"
+        });
+      }
+
+      console.log("🔄 Manual sync requested - fetching from Apify...");
+      const newTrends = await twitterService.fetchTrendingTopics();
+
+      if (newTrends.length === 0) {
+        return res.status(500).json({
+          error: "Failed to fetch trends from Apify",
+          message: "No trends returned from API"
+        });
+      }
+
+      // Clear existing data and insert new trends
+      await storage.clearAllData();
+      
+      for (const trend of newTrends) {
+        await storage.createTrend(trend);
+        
+        // Fetch accounts for this trend (reduced to 5 to save costs)
+        const accounts = await twitterService.fetchTrendAccounts(trend.hashtag, 5);
+        for (const account of accounts) {
+          await storage.createAccount(account);
+        }
+      }
+
+      console.log(`✅ Synced ${newTrends.length} trends from Apify`);
+      res.json({
+        success: true,
+        message: `Synced ${newTrends.length} trends successfully`,
+        trendsCount: newTrends.length
+      });
+    } catch (error) {
+      console.error("Error syncing from Twitter:", error);
+      res.status(500).json({ 
+        error: "Failed to sync data",
+        message: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
   const httpServer = createServer(app);
 
   // WebSocket server for real-time updates
@@ -216,8 +265,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Broadcast updates to all connected clients every 60 seconds
   setInterval(async () => {
-    // Update trends with random changes to simulate real-time data
-    await storage.updateTrendsRandomly();
+    // Try to fetch from Apify if enabled, otherwise simulate with random changes
+    if (twitterService.isServiceEnabled()) {
+      try {
+        const newTrends = await twitterService.fetchTrendingTopics();
+        if (newTrends.length > 0) {
+          console.log(`🔄 Fetched ${newTrends.length} trends from Apify (auto-update)`);
+          // Update existing trends or add new ones
+          await storage.clearAllData();
+          for (const trend of newTrends.slice(0, 20)) {
+            await storage.createTrend(trend);
+          }
+        } else {
+          // Fallback to simulated updates if API returns nothing
+          await storage.updateTrendsRandomly();
+        }
+      } catch (error) {
+        console.error("Error auto-updating from Apify, using simulated data:", error);
+        await storage.updateTrendsRandomly();
+      }
+    } else {
+      // No Apify configured - use simulated updates
+      await storage.updateTrendsRandomly();
+    }
 
     const trends = await storage.getTrends();
     
