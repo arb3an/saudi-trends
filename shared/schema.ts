@@ -13,6 +13,9 @@ export const trends = pgTable("trends", {
   retweets: integer("retweets").notNull(),
   likes: integer("likes").notNull(),
   comments: integer("comments").notNull(),
+  sentimentPositive: integer("sentiment_positive").notNull().default(0), // Percentage 0-100
+  sentimentNegative: integer("sentiment_negative").notNull().default(0), // Percentage 0-100
+  sentimentNeutral: integer("sentiment_neutral").notNull().default(0), // Percentage 0-100
   lastUpdated: timestamp("last_updated").notNull().defaultNow(),
 });
 

@@ -1,6 +1,7 @@
 import { db } from "./db-storage";
 import { trends, accounts } from "@shared/schema";
 import { sql } from "drizzle-orm";
+import { analyzeHashtagSentiment } from "./sentiment-analyzer";
 
 const saudiHashtags = [
   "السعودية_اليوم",
@@ -99,6 +100,9 @@ export async function seedDatabase() {
       const tweetCount = Math.floor(Math.random() * 50000) + 10000;
       const velocity = Math.floor(Math.random() * 1000) - 500;
 
+      // Analyze sentiment for this hashtag
+      const sentiment = analyzeHashtagSentiment(hashtag);
+
       const result = await db
         .insert(trends)
         .values({
@@ -109,6 +113,9 @@ export async function seedDatabase() {
           retweets: Math.floor(Math.random() * 10000) + 1000,
           likes: Math.floor(Math.random() * 20000) + 2000,
           comments: Math.floor(Math.random() * 5000) + 500,
+          sentimentPositive: sentiment.positive,
+          sentimentNegative: sentiment.negative,
+          sentimentNeutral: sentiment.neutral,
         })
         .returning();
 

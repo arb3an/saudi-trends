@@ -1,7 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { TrendingUp, TrendingDown, Hash, MessageCircle, Heart, Repeat2, ChevronLeft } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { TrendingUp, TrendingDown, Hash, MessageCircle, Heart, Repeat2, ChevronLeft, Smile, Frown, Minus } from "lucide-react";
 import type { Trend } from "@shared/schema";
 
 interface TrendCardProps {
@@ -71,6 +72,61 @@ export function TrendCard({ trend, onViewDetails }: TrendCardProps) {
             <span className="text-sm font-medium" dir="ltr">
               {trend.comments.toLocaleString()}
             </span>
+          </div>
+        </div>
+
+        {/* Sentiment Analysis Indicator */}
+        <div className="space-y-2 pt-3 border-t">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium text-muted-foreground">تحليل المشاعر</span>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex items-center gap-1 text-xs">
+                    <Smile className="h-3 w-3 text-green-500" />
+                    <span dir="ltr">{trend.sentimentPositive}%</span>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>مشاعر إيجابية</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+          
+          <div className="h-2 w-full rounded-full overflow-hidden flex" data-testid={`sentiment-bar-${trend.id}`}>
+            {trend.sentimentPositive > 0 && (
+              <div
+                className="bg-green-500"
+                style={{ width: `${trend.sentimentPositive}%` }}
+                title={`إيجابي: ${trend.sentimentPositive}%`}
+              />
+            )}
+            {trend.sentimentNeutral > 0 && (
+              <div
+                className="bg-gray-400"
+                style={{ width: `${trend.sentimentNeutral}%` }}
+                title={`محايد: ${trend.sentimentNeutral}%`}
+              />
+            )}
+            {trend.sentimentNegative > 0 && (
+              <div
+                className="bg-red-500"
+                style={{ width: `${trend.sentimentNegative}%` }}
+                title={`سلبي: ${trend.sentimentNegative}%`}
+              />
+            )}
+          </div>
+          
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <div className="flex items-center gap-1">
+              <Frown className="h-3 w-3 text-red-500" />
+              <span dir="ltr">{trend.sentimentNegative}%</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Minus className="h-3 w-3 text-gray-400" />
+              <span dir="ltr">{trend.sentimentNeutral}%</span>
+            </div>
           </div>
         </div>
 

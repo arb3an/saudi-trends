@@ -18,6 +18,7 @@ import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
 import { eq, desc, sql, and, inArray, gte } from "drizzle-orm";
 import type { IStorage } from "./storage";
+import { analyzeHashtagSentiment } from "./sentiment-analyzer";
 
 const databaseUrl = process.env.DATABASE_URL!;
 const connection = neon(databaseUrl);
@@ -211,6 +212,57 @@ export class DbStorage implements IStorage {
       const newVelocity = Math.max(-500, Math.min(500, trend.velocity + velocityChange));
       const newTweetCount = Math.max(0, trend.tweetCount + newVelocity);
       
+      // Slightly adjust sentiment (±5%) to simulate changing public opinion
+      const sentimentShift = Math.floor(Math.random() * 11) - 5; // -5 to +5
+      let newPositive = Math.max(0, Math.min(100, trend.sentimentPositive + sentimentShift));
+      let newNegative = Math.max(0, Math.min(100, trend.sentimentNegative - sentimentShift));
+      let newNeutral = 100 - newPositive - newNegative;
+      
+      // Robust normalization: ensure all three values are >=0 and sum to exactly 100
+      if (newNeutral < 0) {
+        // Total exceeds 100, scale down positive and negative
+        const total = newPositive + newNegative;
+        if (total > 0) {
+          // Scale proportionally, ensuring no rounding issues
+          const posRatio = newPositive / total;
+          const negRatio = newNegative / total;
+          
+          // Assign using floor to guarantee we don't exceed 100
+          newPositive = Math.floor(posRatio * 100);
+          newNegative = Math.floor(negRatio * 100);
+          // Assign remainder to largest component to reach exactly 100
+          const remainder = 100 - newPositive - newNegative;
+          if (posRatio > negRatio) {
+            newPositive += remainder;
+          } else {
+            newNegative += remainder;
+          }
+          newNeutral = 0;
+        } else {
+          // Edge case: both are 0, set to balanced neutral
+          newPositive = 33;
+          newNegative = 33;
+          newNeutral = 34;
+        }
+      }
+      
+      // Final safety check: ensure sum is exactly 100
+      const finalSum = newPositive + newNegative + newNeutral;
+      if (finalSum !== 100) {
+        // Adjust neutral to compensate for any rounding errors
+        newNeutral = 100 - newPositive - newNegative;
+        // If neutral becomes negative, redistribute again
+        if (newNeutral < 0) {
+          newNeutral = 0;
+          const adjustment = 100 - newPositive - newNegative;
+          if (newPositive >= newNegative) {
+            newPositive = 100 - newNegative;
+          } else {
+            newNegative = 100 - newPositive;
+          }
+        }
+      }
+      
       await db
         .update(trends)
         .set({
@@ -219,6 +271,9 @@ export class DbStorage implements IStorage {
           retweets: Math.max(0, trend.retweets + Math.floor(Math.random() * 50) - 25),
           likes: Math.max(0, trend.likes + Math.floor(Math.random() * 100) - 50),
           comments: Math.max(0, trend.comments + Math.floor(Math.random() * 30) - 15),
+          sentimentPositive: newPositive,
+          sentimentNegative: newNegative,
+          sentimentNeutral: newNeutral,
           lastUpdated: new Date(),
         })
         .where(eq(trends.id, trend.id));
