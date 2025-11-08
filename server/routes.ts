@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./db-storage";
 import { filterSchema, type WSMessage } from "@shared/schema";
+import { trendsToCSV, accountsToCSV, generateExportFilename } from "./export-utils";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // GET /api/trends - Get all trends with filters
@@ -84,6 +85,94 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching trend history:", error);
       res.status(500).json({ error: "Failed to fetch trend history" });
+    }
+  });
+
+  // GET /api/export/trends/csv - Export trends as CSV
+  app.get("/api/export/trends/csv", async (req, res) => {
+    try {
+      const filters = filterSchema.parse({
+        cities: req.query.cities
+          ? Array.isArray(req.query.cities)
+            ? req.query.cities
+            : [req.query.cities]
+          : [],
+        excludeBots: req.query.excludeBots === "true",
+        timeRange: req.query.timeRange || "24h",
+        minEngagement: req.query.minEngagement
+          ? parseInt(req.query.minEngagement as string)
+          : 0,
+      });
+
+      const trends = await storage.getTrends(filters);
+      const csv = trendsToCSV(trends);
+      const filename = generateExportFilename("trends", "csv");
+
+      res.setHeader("Content-Type", "text/csv; charset=utf-8");
+      res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+      res.send(csv);
+    } catch (error) {
+      console.error("Error exporting trends to CSV:", error);
+      res.status(500).json({ error: "Failed to export trends" });
+    }
+  });
+
+  // GET /api/export/trends/json - Export trends as JSON
+  app.get("/api/export/trends/json", async (req, res) => {
+    try {
+      const filters = filterSchema.parse({
+        cities: req.query.cities
+          ? Array.isArray(req.query.cities)
+            ? req.query.cities
+            : [req.query.cities]
+          : [],
+        excludeBots: req.query.excludeBots === "true",
+        timeRange: req.query.timeRange || "24h",
+        minEngagement: req.query.minEngagement
+          ? parseInt(req.query.minEngagement as string)
+          : 0,
+      });
+
+      const trends = await storage.getTrends(filters);
+      const filename = generateExportFilename("trends", "json");
+
+      res.setHeader("Content-Type", "application/json; charset=utf-8");
+      res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+      res.json(trends);
+    } catch (error) {
+      console.error("Error exporting trends to JSON:", error);
+      res.status(500).json({ error: "Failed to export trends" });
+    }
+  });
+
+  // GET /api/export/accounts/csv - Export top accounts as CSV
+  app.get("/api/export/accounts/csv", async (_req, res) => {
+    try {
+      const accounts = await storage.getTopAccounts(100); // Export top 100 accounts
+      const csv = accountsToCSV(accounts);
+      const filename = generateExportFilename("accounts", "csv");
+
+      res.setHeader("Content-Type", "text/csv; charset=utf-8");
+      res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+      res.send(csv);
+    } catch (error) {
+      console.error("Error exporting accounts to CSV:", error);
+      res.status(500).json({ error: "Failed to export accounts" });
+    }
+  });
+
+  // GET /api/export/accounts/json - Export top accounts as JSON
+  app.get("/api/export/accounts/json", async (_req, res) => {
+    try {
+      const accounts = await storage.getTopAccounts(100); // Export top 100 accounts
+      const filename = generateExportFilename("accounts", "json");
+
+      res.setHeader("Content-Type", "application/json; charset=utf-8");
+      res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+      res.json(accounts);
+    } catch (error) {
+      console.error("Error exporting accounts to JSON:", error);
+      res.status(500).json({ error: "Failed to export accounts" });
     }
   });
 

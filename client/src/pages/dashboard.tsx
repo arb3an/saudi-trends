@@ -14,8 +14,16 @@ import {
   TopAccountsSkeleton,
 } from "@/components/loading-skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Download, FileText, FileJson } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
+} from "@/components/ui/dropdown-menu";
 import type { Filters, TrendWithAccounts, Account } from "@shared/schema";
 
 export default function Dashboard() {
@@ -159,6 +167,34 @@ export default function Dashboard() {
     }));
   };
 
+  // Helper function to build export URL with current filters
+  const buildExportUrl = (type: "trends" | "accounts", format: "csv" | "json"): string => {
+    const params = new URLSearchParams();
+    
+    if (type === "trends") {
+      if (filters.cities.length > 0) {
+        filters.cities.forEach((city) => params.append("cities", city));
+      }
+      params.set("excludeBots", filters.excludeBots.toString());
+      params.set("timeRange", filters.timeRange);
+      params.set("minEngagement", filters.minEngagement.toString());
+    }
+    
+    return `/api/export/${type}/${format}?${params.toString()}`;
+  };
+
+  // Trigger file download
+  const handleExport = (type: "trends" | "accounts", format: "csv" | "json") => {
+    const url = buildExportUrl(type, format);
+    window.open(url, "_blank");
+    
+    toast({
+      title: "تصدير البيانات",
+      description: `جاري تحميل البيانات بصيغة ${format.toUpperCase()}`,
+      duration: 3000,
+    });
+  };
+
   return (
     <div className="min-h-screen bg-background" dir="rtl">
       {/* Header */}
@@ -189,7 +225,53 @@ export default function Dashboard() {
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 md:gap-4">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2"
+                    data-testid="button-export"
+                  >
+                    <Download className="h-4 w-4" />
+                    <span className="hidden md:inline">تصدير</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuLabel>تصدير الترندات</DropdownMenuLabel>
+                  <DropdownMenuItem
+                    onClick={() => handleExport("trends", "csv")}
+                    data-testid="export-trends-csv"
+                  >
+                    <FileText className="ml-2 h-4 w-4" />
+                    CSV
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => handleExport("trends", "json")}
+                    data-testid="export-trends-json"
+                  >
+                    <FileJson className="ml-2 h-4 w-4" />
+                    JSON
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuLabel>تصدير الحسابات</DropdownMenuLabel>
+                  <DropdownMenuItem
+                    onClick={() => handleExport("accounts", "csv")}
+                    data-testid="export-accounts-csv"
+                  >
+                    <FileText className="ml-2 h-4 w-4" />
+                    CSV
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => handleExport("accounts", "json")}
+                    data-testid="export-accounts-json"
+                  >
+                    <FileJson className="ml-2 h-4 w-4" />
+                    JSON
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
               <LiveIndicator lastUpdated={lastUpdated} isConnected={isConnected} />
               <ThemeToggle />
             </div>

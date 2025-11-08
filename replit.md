@@ -22,6 +22,15 @@ Track and analyze Saudi Arabian social media trends in real-time with:
 - ⏳ Twitter/X API integration pending (requires API credentials)
 
 ## Recent Changes (November 8, 2025)
+### Export Functionality (Task 6 - Completed)
+- ✅ Created 4 export endpoints: CSV/JSON for trends and accounts
+- ✅ Implemented CSV conversion utilities with proper Arabic headers
+- ✅ Added export dropdown button to dashboard header with icons
+- ✅ Filter integration: trends export respects cities, excludeBots, timeRange, minEngagement
+- ✅ Proper HTTP headers: Content-Type and Content-Disposition for file downloads
+- ✅ Timestamp-based filenames (e.g., saudi-trends-trends-2025-11-08T12-00-52.csv)
+- ✅ All tests passed - UI displays correctly, downloads work, filters applied
+
 ### Advanced Bot Detection (Task 5 - Completed)
 - ✅ Added botScore (0-100) and accountAge fields to accounts schema
 - ✅ Implemented multi-factor bot detection algorithm analyzing:
