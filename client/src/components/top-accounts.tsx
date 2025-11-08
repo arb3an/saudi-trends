@@ -2,7 +2,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { CheckCircle2, Users, Heart, MapPin } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { CheckCircle2, Users, Heart, MapPin, AlertTriangle, ShieldAlert, Info } from "lucide-react";
 import type { Account } from "@shared/schema";
 
 interface TopAccountsProps {
@@ -40,7 +41,7 @@ export function TopAccounts({ accounts, trendHashtag }: TopAccountsProps) {
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5 mb-0.5">
+                    <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
                       <h4 className="font-semibold text-sm truncate">
                         {account.displayName}
                       </h4>
@@ -51,6 +52,53 @@ export function TopAccounts({ accounts, trendHashtag }: TopAccountsProps) {
                         <Badge variant="secondary" className="text-xs">
                           بوت
                         </Badge>
+                      )}
+                      {/* Bot probability indicator */}
+                      {account.botScore > 0 && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger>
+                              <Badge
+                                variant={
+                                  account.botScore >= 75 ? "destructive" : 
+                                  account.botScore >= 50 ? "secondary" : 
+                                  account.botScore >= 25 ? "default" : 
+                                  "outline"
+                                }
+                                className="text-xs gap-1"
+                                data-testid={`bot-score-${account.id}`}
+                              >
+                                {account.botScore >= 75 ? (
+                                  <ShieldAlert className="h-3 w-3" />
+                                ) : account.botScore >= 50 ? (
+                                  <AlertTriangle className="h-3 w-3" />
+                                ) : account.botScore >= 25 ? (
+                                  <Info className="h-3 w-3" />
+                                ) : (
+                                  <Info className="h-3 w-3" />
+                                )}
+                                <span dir="ltr">{account.botScore}%</span>
+                              </Badge>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <div className="space-y-1">
+                                <p className="font-semibold">احتمالية البوت</p>
+                                <p className="text-xs">
+                                  {account.botScore >= 75
+                                    ? "خطر عالي جداً"
+                                    : account.botScore >= 50
+                                    ? "خطر عالي"
+                                    : account.botScore >= 25
+                                    ? "خطر متوسط"
+                                    : "خطر منخفض"}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                  عمر الحساب: {account.accountAge} يوم
+                                </p>
+                              </div>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                       )}
                     </div>
                     <p className="text-xs text-muted-foreground truncate" dir="ltr">

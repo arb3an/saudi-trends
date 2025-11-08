@@ -35,8 +35,10 @@ export const accounts = pgTable("accounts", {
   avatar: text("avatar").notNull(),
   verified: boolean("verified").notNull().default(false),
   isBot: boolean("is_bot").notNull().default(false),
+  botScore: integer("bot_score").notNull().default(0), // Bot probability 0-100 (0=human, 100=definitely bot)
   city: text("city"),
   followers: integer("followers").notNull(),
+  accountAge: integer("account_age").notNull().default(365), // Days since account creation
   trendId: varchar("trend_id").references(() => trends.id),
 });
 

@@ -21,22 +21,34 @@ Track and analyze Saudi Arabian social media trends in real-time with:
 - ✅ City filtering logic implemented (only shows trends with matching accounts)
 - ⏳ Twitter/X API integration pending (requires API credentials)
 
-## Recent Changes (November 7, 2025)
-### Database Migration
-- Migrated from in-memory storage to PostgreSQL with Drizzle ORM
+## Recent Changes (November 8, 2025)
+### Advanced Bot Detection (Task 5 - Completed)
+- ✅ Added botScore (0-100) and accountAge fields to accounts schema
+- ✅ Implemented multi-factor bot detection algorithm analyzing:
+  - Follower patterns (very low/high = suspicious)
+  - Account age (new accounts = higher risk)
+  - Username patterns (digits, bot keywords)
+  - Verification status (bonus for verified)
+- ✅ Created bot-detector.ts with risk level categorization (low/medium/high/very high)
+- ✅ Updated UI to display bot probability badges with color-coded risk levels
+- ✅ Added tooltips showing risk level and account age in Arabic
+- ✅ All tests passed - bot scores calculated correctly, UI displays properly, filtering works
+
+### Arabic Sentiment Analysis (Task 4 - Completed)
+- ✅ Implemented Arabic keyword-based sentiment analysis with positive/negative word dictionaries
+- ✅ Added sentiment fields to trends schema (sentimentPositive, sentimentNegative, sentimentNeutral)
+- ✅ Created sentiment-analyzer.ts with robust normalization ensuring values always sum to 100
+- ✅ Updated frontend TrendCard with color-coded sentiment bars (green/gray/red) and Arabic tooltips
+- ✅ Fixed sentiment normalization bugs in both initial seeding and real-time updates
+- ✅ All tests passed - sentiment values maintained at exactly 100% through update cycles
+
+### Previous Changes (November 7, 2025)
+- Database Migration to PostgreSQL with Drizzle ORM
 - Added snapshots table for historical trend tracking
-- Implemented automatic database seeding on startup (12 trends, 83 accounts)
+- Implemented automatic database seeding on startup
 - Created DbStorage class with full CRUD operations
-
-### Scheduled Jobs
-- Trend updates broadcast via WebSocket every 60 seconds
-- Snapshot capture every 5 minutes for time-series analytics
-- Automatic cleanup of snapshots older than 30 days
-
-### API Enhancements
-- Added `/api/trends/:id/history` endpoint for historical data
-- Fixed city filtering to prevent empty trend cards
-- Optimized query structure with array-based query keys for cache invalidation
+- Scheduled jobs: updates (60s), snapshots (5min), cleanup (30 days)
+- API enhancements: history endpoint, city filtering, optimized queries
 
 ## Project Architecture
 

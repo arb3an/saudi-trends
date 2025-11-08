@@ -2,6 +2,7 @@ import { db } from "./db-storage";
 import { trends, accounts } from "@shared/schema";
 import { sql } from "drizzle-orm";
 import { analyzeHashtagSentiment } from "./sentiment-analyzer";
+import { detectBot } from "./bot-detector";
 
 const saudiHashtags = [
   "السعودية_اليوم",
@@ -131,15 +132,33 @@ export async function seedDatabase() {
         const nameIndex = Math.floor(Math.random() * arabicNames.length);
         const usernameIndex = Math.floor(Math.random() * usernames.length);
         const cityIndex = Math.floor(Math.random() * cities.length);
+        
+        const username = usernames[usernameIndex] + (totalAccounts + i);
+        const verified = Math.random() > 0.7;
+        const followers = Math.floor(Math.random() * 100000) + 1000;
+        const accountAge = Math.floor(Math.random() * 1800) + 30; // 30-1830 days
+        
+        // Detect bot using advanced algorithm
+        const botDetection = detectBot({
+          followers,
+          accountAge,
+          username,
+          verified,
+        });
+        
+        // Determine if account is bot based on score (>50 = likely bot)
+        const isBot = botDetection.score > 50;
 
         await db.insert(accounts).values({
-          username: usernames[usernameIndex] + (totalAccounts + i),
+          username,
           displayName: arabicNames[nameIndex],
           avatar: `https://i.pravatar.cc/150?img=${(totalAccounts + i) % 70}`,
-          verified: Math.random() > 0.7,
-          isBot: Math.random() > 0.85, // 15% chance of bot
+          verified,
+          isBot,
+          botScore: botDetection.score,
           city: cities[cityIndex],
-          followers: Math.floor(Math.random() * 100000) + 1000,
+          followers,
+          accountAge,
           trendId: trend.id,
         });
       }
