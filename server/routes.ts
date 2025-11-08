@@ -201,12 +201,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.clearAllData();
       
       for (const trend of newTrends) {
-        await storage.createTrend(trend);
+        const createdTrend = await storage.createTrend(trend);
         
         // Fetch accounts for this trend (reduced to 5 to save costs)
         const accounts = await twitterService.fetchTrendAccounts(trend.hashtag, 5);
         for (const account of accounts) {
-          await storage.createAccount(account);
+          // Fix: Use the actual trend ID from database, not the hashtag
+          await storage.createAccount({
+            ...account,
+            trendId: createdTrend.id
+          });
         }
       }
 
@@ -274,7 +278,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Update existing trends or add new ones
           await storage.clearAllData();
           for (const trend of newTrends.slice(0, 20)) {
-            await storage.createTrend(trend);
+            const createdTrend = await storage.createTrend(trend);
+            
+            // Fetch 3 accounts per trend to minimize costs during auto-updates
+            const accounts = await twitterService.fetchTrendAccounts(trend.hashtag, 3);
+            for (const account of accounts) {
+              await storage.createAccount({
+                ...account,
+                trendId: createdTrend.id
+              });
+            }
           }
         } else {
           // Fallback to simulated updates if API returns nothing

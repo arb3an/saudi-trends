@@ -12,16 +12,28 @@ Track and analyze Saudi Arabian social media trends in real-time with:
 - Admin filters for cities, bot detection, and time range
 
 ## Current State
-**Phase 2 Complete**: Full-stack application with PostgreSQL persistence
+**Phase 3 Complete**: Full-stack application with Apify Twitter integration
 - ✅ PostgreSQL database with Drizzle ORM for persistent storage
 - ✅ Historical snapshots table with automatic capture every 5 minutes
 - ✅ Scheduled jobs for data updates, snapshots, and cleanup (30-day retention)
 - ✅ WebSocket real-time updates working with database-backed data
 - ✅ All API endpoints functional with live data
 - ✅ City filtering logic implemented (only shows trends with matching accounts)
-- ⏳ Twitter/X API integration pending (requires API credentials)
+- ✅ Apify Twitter Scraper integration (cost-effective alternative to Twitter API)
+- ✅ Automatic fetching of real Saudi trends every 60 seconds (when API token provided)
+- ✅ Manual sync endpoint for on-demand data refresh
+- ✅ Fallback to simulated data when API unavailable
 
 ## Recent Changes (November 8, 2025)
+### Twitter/X API Integration via Apify (Task 7 - Completed)
+- ✅ Integrated Apify Twitter Trends Scraper (cost: ~$0.01 per 1000 results)
+- ✅ Created TwitterService class with fetchTrendingTopics() and fetchTrendAccounts()
+- ✅ Added POST /api/sync/twitter endpoint for manual data synchronization
+- ✅ Auto-fetch real trends every 60 seconds if APIFY_API_TOKEN is set
+- ✅ Graceful fallback to simulated data when API unavailable
+- ✅ Sentiment analysis and bot detection applied to real Twitter data
+- ✅ Cost optimization: limited to 5 accounts per trend to reduce API costs
+
 ### Export Functionality (Task 6 - Completed)
 - ✅ Created 4 export endpoints: CSV/JSON for trends and accounts
 - ✅ Implemented CSV conversion utilities with proper Arabic headers
@@ -116,6 +128,11 @@ shared/
 - `GET /api/trends/:id/history` - Get historical snapshots (query param: hours)
 - `GET /api/accounts/top` - Fetch top 20 participating accounts by followers
 - `GET /api/accounts` - Get accounts by trend (query param: trendId)
+- `POST /api/sync/twitter` - Manually sync data from Apify Twitter Scraper
+- `GET /api/export/trends/csv` - Export trends as CSV with Arabic headers
+- `GET /api/export/trends/json` - Export trends as JSON
+- `GET /api/export/accounts/csv` - Export accounts as CSV with Arabic headers
+- `GET /api/export/accounts/json` - Export accounts as JSON
 - `WebSocket /ws` - Real-time updates every 60 seconds
 
 ### WebSocket Messages
@@ -129,9 +146,39 @@ shared/
 - Theme: Light mode default with dark mode support
 - Auto-refresh: Every 60 seconds
 
-## Next Steps
-1. Implement backend API endpoints with mock Saudi trend data
-2. Set up WebSocket server for real-time updates
-3. Connect frontend to backend APIs
-4. Test complete user journey
-5. Polish loading states and error handling
+## Setup Instructions
+
+### Required Environment Variables
+- `DATABASE_URL` - PostgreSQL connection string (automatically provided by Replit)
+- `APIFY_API_TOKEN` - (Optional) Apify API token for real Twitter data
+  - Get free account at https://apify.com
+  - Cost: ~$0.01 per 1000 results
+  - Without token: app uses simulated data
+
+### Running the Application
+```bash
+npm run dev  # Starts both backend and frontend
+```
+
+### Manual Twitter Sync
+```bash
+curl -X POST http://localhost:5000/api/sync/twitter
+```
+
+## Technical Decisions
+
+### Why Apify Instead of Twitter API?
+- **Cost**: Twitter API Pro tier costs $5,000+/month, Apify costs ~$0.01 per 1000 results
+- **Accessibility**: Twitter API requires expensive subscription, Apify works with free account
+- **Reliability**: Apify scraper proven to work for Saudi trends
+- **Flexibility**: Easy to switch to official API later if needed
+
+### Bot Detection Algorithm
+- Deterministic (no randomness) for consistent scoring
+- Multi-factor analysis: followers, account age, username patterns, verification
+- Risk levels: Low (0-24%), Medium (25-49%), High (50-74%), Very High (75-100%)
+
+### Sentiment Analysis
+- Arabic keyword-based with positive/negative word dictionaries
+- Always sums to exactly 100% (robust normalization)
+- Applied to both hashtags and tweet content
