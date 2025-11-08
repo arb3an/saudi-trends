@@ -24,8 +24,12 @@ const SAUDI_WOEIDS = {
 };
 
 interface ApifyTrendItem {
-  trend_name: string;
-  tweet_volume?: number;
+  trend?: string;          // Actual field name from Apify
+  trend_name?: string;     // Alternative field name
+  volume?: string;         // Tweet volume as string (e.g., "28,287Tweets")
+  tweet_volume?: number;   // Alternative field name
+  timePeriod?: string;     // Time period (Live, 1 hour ago, etc.)
+  time?: string;           // Timestamp
   url?: string;
   promoted_content?: boolean;
 }
@@ -75,10 +79,11 @@ export class TwitterService {
       console.log('🔄 Fetching Saudi Arabia trends from Apify...');
 
       // Run the Apify actor for Saudi Arabia trends
+      // Saudi Arabia is number 28 in the supported countries list
       const run = await this.client
         .actor("karamelo/twitter-trends-scraper")
         .call({
-          country: "Saudi Arabia",
+          country: "28",
           proxyOptions: {
             useApifyProxy: true,
           },
@@ -92,9 +97,26 @@ export class TwitterService {
       console.log(`✅ Fetched ${items.length} trends from Apify`);
 
       // Transform Apify data to our Trend schema
-      const trends: Trend[] = (items as unknown as ApifyTrendItem[]).slice(0, 50).map((item, index) => {
-        const hashtag = item.trend_name;
-        const tweetCount = item.tweet_volume || Math.floor(Math.random() * 50000) + 5000;
+      // Filter out items without trend name and only keep "Live" trends
+      const liveItems = (items as unknown as ApifyTrendItem[])
+        .filter(item => 
+          (item.trend || item.trend_name) && 
+          (!item.timePeriod || item.timePeriod === 'Live')
+        )
+        .slice(0, 50);
+      
+      const trends: Trend[] = liveItems.map((item, index) => {
+        const hashtag = item.trend || item.trend_name || '';
+        
+        // Parse tweet volume (e.g., "28,287Tweets" -> 28287)
+        let tweetCount = item.tweet_volume || 0;
+        if (!tweetCount && item.volume) {
+          const volumeStr = item.volume.replace(/[^\d]/g, '');
+          tweetCount = parseInt(volumeStr) || Math.floor(Math.random() * 50000) + 5000;
+        }
+        if (!tweetCount) {
+          tweetCount = Math.floor(Math.random() * 50000) + 5000;
+        }
         
         // Analyze sentiment
         const sentiment = analyzeSentiment(hashtag);
