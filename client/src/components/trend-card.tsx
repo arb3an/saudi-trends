@@ -37,18 +37,15 @@ export function TrendCard({ trend, onViewDetails }: TrendCardProps) {
       <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0 pb-3">
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-2">
-            <Badge variant="secondary" className="gap-1.5">
-              <Hash className="h-3 w-3" />
-              <a
-                href={`https://twitter.com/hashtag/${encodeURIComponent(trend.hashtag.replace("#", ""))}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-500 hover:underline"
-                dir="ltr"
-              >
-                {trend.hashtag}
-              </a>
-            </Badge>
+            <a
+              href={`https://twitter.com/hashtag/${encodeURIComponent(trend.hashtag.replace('#',''))}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="gap-1.5 inline-flex items-center text-blue-500 hover:underline"
+              dir="ltr"
+            >
+              {trend.hashtag}
+            </a>
             {isRising ? (
               <TrendingUp className="h-4 w-4 text-primary" />
             ) : (

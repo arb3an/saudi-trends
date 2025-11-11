@@ -83,3 +83,21 @@ app.use((req, res, next) => {
     log(`serving on port ${port}`);
   });
 })();
+import { getSaudiTrends } from "./trends";
+
+app.get("/health", (req, res) => {
+  const simulated = process.env.USE_SIMULATED === "true";
+  res.json({ source: simulated ? "simulated" : "trends24" });
+});
+
+app.get("/api/trends", async (req, res) => {
+  try {
+    if (process.env.USE_SIMULATED === "true") {
+      return res.json({ trends: ["#مثال1", "#مثال2", "#مثال3"] });
+    }
+    const trends = await getSaudiTrends();
+    res.json({ trends });
+  } catch {
+    res.status(502).json({ trends: [], error: "fetch_failed" });
+  }
+});
