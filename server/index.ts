@@ -1,7 +1,17 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
-import { seedDatabase } from "./seed";
+// شغّل التهيئة فقط إذا فعّلتها صراحةً بمتغير بيئة
+if (process.env.ENABLE_DB_SEED === "1") {
+  try {
+    await seedDatabase();
+    console.log("DB seeded");
+  } catch (e:any) {
+    console.warn("Skip seeding:", e?.message || e);
+  }
+} else {
+  console.log("DB seeding disabled");
+}
 
 const app = express();
 
@@ -49,7 +59,6 @@ app.use((req, res, next) => {
 
 (async () => {
   // Seed database with initial data if empty
-  await seedDatabase();
   
   const server = await registerRoutes(app);
 
