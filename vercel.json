@@ -1,12 +1,13 @@
 {
   "version": 2,
+  "buildCommand": "npm install && npm run build",
   "builds": [
     {
       "src": "server/index.ts",
       "use": "@vercel/node"
     },
     {
-      "src": "client/vite.config.ts",
+      "src": "vite.config.ts",
       "use": "@vercel/static-build",
       "config": {
         "distDir": "dist/client"
