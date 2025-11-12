@@ -1,13 +1,16 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import { resolve } from "path";
 
-// إعداد بسيط ومباشر بدون إضافات Replit
+// نبني من مجلد client ونخرج إلى dist/client
 export default defineConfig({
+  root: "client",
   plugins: [react()],
-  server: {
-    port: 3000,
-  },
   build: {
-    outDir: "dist",
+    outDir: resolve(process.cwd(), "dist/client"),
+    emptyOutDir: true
   },
+  server: {
+    port: 3000
+  }
 });
