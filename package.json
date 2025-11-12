@@ -107,3 +107,9 @@
     "bufferutil": "^4.0.8"
   }
 }
+{
+  "scripts": {
+    "dev": "NODE_ENV=development tsx server/index.ts",
+    "start": "NODE_ENV=production tsx server/index.ts"
+  }
+}
