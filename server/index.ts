@@ -1,19 +1,22 @@
+// server/index.ts
 import express, { type Request, Response, NextFunction } from "express";
 import type { Express } from "express";
+import type { Server } from "http";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
-import { getSaudiTrends } from "./trends"; // لازم تكون كل الـ imports بالأعلى
+import { getSaudiTrends } from "./trends";
 
-// أنشئ التطبيق
+// إنشاء التطبيق
 const app: Express = express();
 
-// إعداد body parsers + لوج مبسّط لطلبات /api
+// للسماح بقراءة الـ rawBody إن احتجناه
 declare module "http" {
   interface IncomingMessage {
     rawBody: unknown;
   }
 }
 
+// بارس للجسم + لوج مبسّط لطلبات /api
 app.use(
   express.json({
     verify: (req, _res, buf) => {
@@ -47,18 +50,23 @@ app.use((req, res, next) => {
   next();
 });
 
-// مسارات بسيطة قبل تشغيل السيرفر
+// ====== مسارات بسيطة تعمل دائماً (بدون DB / بدون Apify) ======
 
 app.get("/health", (_req, res) => {
   const simulated = process.env.USE_SIMULATED === "true";
-  res.json({ source: simulated ? "simulated" : "trends24" });
+  res.json({ ok: true, source: simulated ? "simulated" : "trends24" });
 });
 
 app.get("/api/trends", async (_req, res) => {
   try {
+    // وضع محاكاة مجاني (لو ما تبغى اتصال خارجي)
     if (process.env.USE_SIMULATED === "true") {
-      return res.json({ trends: ["#مثال1", "#مثال2", "#مثال3"] });
+      return res.json({
+        trends: ["#مثال1", "#مثال2", "#مثال3", "#TrendFree", "#KSA"],
+      });
     }
+
+    // جلب مباشر من موقع خارجي (بدون قاعدة بيانات)
     const trends = await getSaudiTrends();
     res.json({ trends });
   } catch {
@@ -66,35 +74,34 @@ app.get("/api/trends", async (_req, res) => {
   }
 });
 
-// لا تستخدم seeding هنا نهائيًا (كانت تسبب خطأ seedDatabase غير معرّف)
-// لو احتجتها لاحقًا نرجعها بشكل سليم مع import صحيح
+// =============================================================
 
-// شغّل كل شيء
+let serverRef: Server | null = null;
+
 (async () => {
-  // لو عندك REST routes إضافية من ملف routes.ts
-  const server = await registerRoutes(app);
+  // يسجّل بقية المسارات (الملف يرجّع Server مربوط على app)
+  serverRef = await registerRoutes(app);
 
-  // في التطوير: شغّل Vite middleware
-  // في الإنتاج: قدّم ملفات الواجهة الجاهزة من dist/client
+  // في التطوير نشغّل Vite ميدل وير، وفي الإنتاج نخدم ملفات الواجهة
   if (app.get("env") === "development") {
-    await setupVite(app, server);
+    await setupVite(app, serverRef);
   } else {
     serveStatic(app);
   }
 
-  // منفذ Render (إجباري)
-  const port = parseInt(process.env.PORT || "5000", 10);
-  server.listen(
-    {
-      port,
-      host: "0.0.0.0",
-      reusePort: true,
-    },
-    () => {
-      log(`serving on port ${port}`);
-    }
-  );
+  // على المنصات العادية نشغّل الاستماع للبورت
+  // على Vercel لا نستمع؛ فقط نصدّر app بالأسفل
+  if (!process.env.VERCEL) {
+    const port = parseInt(process.env.PORT || "5000", 10);
+    serverRef.listen(
+      { port, host: "0.0.0.0", reusePort: true },
+      () => log(`serving on port ${port}`)
+    );
+  }
 })().catch((err) => {
-  console.error("Fatal boot error:", err);
+  console.error(err);
   process.exit(1);
 });
+
+// مهم لـ Vercel: صدّر التطبيق نفسه كـ handler
+export default app;
